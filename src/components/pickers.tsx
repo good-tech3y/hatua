@@ -1,6 +1,6 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { CheckIcon, LockSimpleIcon } from 'phosphor-react-native';
+import { RealmScene } from './scene';
 import { REALMS, REALM_ORDER, SKINS, SKIN_ORDER } from '../lib/realms';
 import type { RealmId, SkinId } from '../lib/realms';
 import { colors, typography } from '../theme';
@@ -14,6 +14,8 @@ export function RealmPicker({
   pro: boolean;
   onPick: (id: RealmId, locked: boolean) => void;
 }) {
+  const { width } = useWindowDimensions();
+  const cardW = Math.floor((width - 44 - 10) / 2);
   return (
     <View style={styles.grid}>
       {REALM_ORDER.map((id) => {
@@ -21,17 +23,22 @@ export function RealmPicker({
         const locked = r.pro && !pro;
         const on = value === id;
         return (
-          <Pressable key={id} onPress={() => onPick(id, locked)} style={[styles.realm, on && styles.on]}>
-            <Svg width="100%" height={64} style={styles.preview}>
-              <Defs>
-                <LinearGradient id={`g-${id}`} x1="0" y1="0" x2="0" y2="1">
-                  {r.stops.map((c, i) => (
-                    <Stop key={i} offset={i / 2} stopColor={c} />
-                  ))}
-                </LinearGradient>
-              </Defs>
-              <Rect width="100%" height="100%" fill={`url(#g-${id})`} />
-            </Svg>
+          <Pressable
+            key={id}
+            onPress={() => onPick(id, locked)}
+            style={[styles.realm, { width: cardW }, on && styles.on]}
+          >
+            <RealmScene
+              realm={id}
+              width={cardW - 20}
+              height={92}
+              total={1}
+              current={0}
+              level={1}
+              still
+              hero={false}
+              radius={14}
+            />
             <View style={styles.row}>
               <Text style={styles.name}>{r.name}</Text>
               {locked ? (
@@ -83,15 +90,13 @@ export function SkinPicker({
 const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   realm: {
-    width: '48%',
     padding: 8,
-    borderRadius: 20,
+    borderRadius: 22,
     borderWidth: 2,
     borderColor: 'transparent',
     backgroundColor: 'rgba(252,254,255,0.88)',
   },
   on: { borderColor: colors.cobalt },
-  preview: { borderRadius: 14, overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 },
   name: { ...typography.heading, fontSize: 15, color: colors.navy },
   blurb: { ...typography.caption, color: colors.bodyMuted, marginTop: 2, marginBottom: 4 },

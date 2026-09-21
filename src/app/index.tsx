@@ -1,4 +1,4 @@
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,18 +8,32 @@ import {
   DotsThreeIcon,
   FlagIcon,
   HouseSimpleIcon,
+  TrophyIcon,
 } from 'phosphor-react-native';
 import { HatuaMark, HeroFigure } from '../components/art';
+import type { Mood } from '../components/art';
+import { RealmScene } from '../components/scene';
 import { StatBar } from '../components/stats';
 import { Backdrop, Chip, GlassCard, PillButton, RoundButton, Toolbar } from '../components/ui';
-import { currentQuestIndex, journeyPercent, levelOf, successRate, xpInLevel } from '../lib/game';
+import {
+  currentQuestIndex,
+  dayKey,
+  journeyPercent,
+  levelOf,
+  streakDays,
+  successRate,
+  xpInLevel,
+} from '../lib/game';
+import { useRealm } from '../lib/useRealm';
 import { useStore } from '../lib/store';
 import { colors, typography } from '../theme';
 
 export default function Today() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { goal, checkIns, xp, health, resetAll } = useStore();
+  const { width } = useWindowDimensions();
+  const { goal, checkIns, xp, health } = useStore();
+  const realm = useRealm();
 
   if (!goal) return <Redirect href="/welcome" />;
 
@@ -27,20 +41,15 @@ export default function Today() {
   const quest = goal.quests[qi];
   const finished = !quest;
   const level = levelOf(xp);
-
-  function menu() {
-    Alert.alert('Start over?', 'This clears your goal, your hero and your check-ins from this phone.', [
-      { text: 'Keep going', style: 'cancel' },
-      {
-        text: 'Start over',
-        style: 'destructive',
-        onPress: () => {
-          resetAll();
-          router.replace('/welcome');
-        },
-      },
-    ]);
-  }
+  const streak = streakDays(checkIns);
+  const movedToday = checkIns.some((c) => c.day === dayKey() && c.verdict === 'progress');
+  const mood: Mood = health >= 55 ? 'happy' : health >= 30 ? 'calm' : 'low';
+  const headline = finished ? 'You reached the end.' : movedToday ? 'That’s today done.' : 'One small step today.';
+  const body = finished
+    ? 'Start a new goal from Settings when you are ready.'
+    : movedToday
+      ? 'You already moved forward today. Come back tomorrow for the next step.'
+      : `${quest.done} of ${quest.need} real days so far. Only honest check-ins count.`;
 
   return (
     <View style={styles.root}>
@@ -63,29 +72,35 @@ export default function Today() {
         </Animated.View>
 
         <Animated.Text entering={FadeInDown.delay(80).duration(600)} style={styles.headline}>
-          {finished ? 'You reached the end.' : 'One small step today.'}
+          {headline}
         </Animated.Text>
-        <Animated.Text
-          entering={FadeInDown.delay(160).duration(600)}
-          style={styles.lead}
-          numberOfLines={2}
-        >
+        <Animated.Text entering={FadeInDown.delay(160).duration(600)} style={styles.lead} numberOfLines={2}>
           Working toward: {goal.text}
         </Animated.Text>
 
-        <Animated.View entering={FadeInDown.delay(240).duration(600)} style={styles.chips}>
-          <Chip
-            label={finished ? 'Complete' : `Quest ${qi + 1} of ${goal.quests.length}`}
-            active
+        <Animated.View entering={FadeInDown.delay(240).duration(700)} style={styles.scene}>
+          <RealmScene
+            realm={realm}
+            width={width - 44}
+            height={270}
+            total={goal.quests.length}
+            current={qi}
+            level={level}
+            mood={mood}
           />
-          <Chip label={`Level ${level}`} />
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(320).duration(600)}>
+        <Animated.View entering={FadeInDown.delay(320).duration(600)} style={styles.chips}>
+          <Chip label={finished ? 'Complete' : `Quest ${qi + 1} of ${goal.quests.length}`} active />
+          <Chip label={`Level ${level}`} />
+          {streak > 0 ? <Chip label={`${streak} day streak`} /> : null}
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(400).duration(600)}>
           <GlassCard>
             <View style={styles.heroRow}>
               <View style={styles.avatar}>
-                <HeroFigure size={50} />
+                <HeroFigure size={50} mood={mood} />
               </View>
               <View>
                 <Text style={styles.name}>Your hero</Text>
@@ -100,18 +115,14 @@ export default function Today() {
           </GlassCard>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(400).duration(600)}>
+        <Animated.View entering={FadeInDown.delay(480).duration(600)}>
           <GlassCard>
             <Text style={styles.kicker}>{finished ? 'All done' : 'Today’s quest'}</Text>
             <Text style={styles.questTitle}>{quest ? quest.title : 'You finished this path.'}</Text>
-            <Text style={styles.body}>
-              {quest
-                ? `${quest.done} of ${quest.need} real days so far. Only honest check-ins count.`
-                : 'Start a new goal from the menu when you are ready.'}
-            </Text>
+            <Text style={styles.body}>{body}</Text>
             {quest ? (
               <PillButton
-                label="Check in"
+                label={movedToday ? 'Check in again' : 'Check in'}
                 icon={<ArrowRightIcon size={18} color={colors.white} weight="bold" />}
                 onPress={() => router.push('/checkin')}
               />
@@ -121,22 +132,21 @@ export default function Today() {
       </ScrollView>
 
       <Animated.View
-        entering={FadeInUp.delay(500).springify().damping(16)}
+        entering={FadeInUp.delay(600).springify().damping(16)}
         style={[styles.dock, { bottom: insets.bottom + 18 }]}
       >
         <Toolbar
           activeKey="today"
-          onChange={(key) => {
+          onChange={(key: string) => {
             if (key === 'path') router.push('/path');
             if (key === 'history') router.push('/history');
+            if (key === 'wins') router.push('/achievements');
           }}
           items={[
-            { key: 'today', icon: (c) => <HouseSimpleIcon size={22} color={c} weight="bold" /> },
-            { key: 'path', icon: (c) => <FlagIcon size={22} color={c} weight="bold" /> },
-            {
-              key: 'history',
-              icon: (c) => <ClockCounterClockwiseIcon size={22} color={c} weight="bold" />,
-            },
+            { key: 'today', icon: (c: string) => <HouseSimpleIcon size={22} color={c} weight="bold" /> },
+            { key: 'path', icon: (c: string) => <FlagIcon size={22} color={c} weight="bold" /> },
+            { key: 'history', icon: (c: string) => <ClockCounterClockwiseIcon size={22} color={c} weight="bold" /> },
+            { key: 'wins', icon: (c: string) => <TrophyIcon size={22} color={c} weight="bold" /> },
           ]}
         />
       </Animated.View>
@@ -149,7 +159,8 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between' },
   headline: { ...typography.display, color: colors.cobalt, marginTop: 30 },
   lead: { ...typography.body, color: colors.navy, marginTop: 10, maxWidth: 330 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 22, marginBottom: 22 },
+  scene: { marginTop: 22 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 16, marginBottom: 18 },
   heroRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   avatar: {
     width: 54,

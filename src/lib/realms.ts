@@ -12,25 +12,25 @@ export const REALMS: Record<
 > = {
   meadow: {
     name: 'Meadow',
-    blurb: 'Soft sky where everyone starts.',
+    blurb: 'Lanterns up a sunny hill.',
     pro: false,
     stops: [colors.skyDeep, colors.sky, colors.skyMist],
   },
   lagoon: {
     name: 'Lagoon',
-    blurb: 'Cool, clear water.',
+    blurb: 'Stepping stones across the water.',
     pro: true,
     stops: [colors.teal, colors.blueSoft, colors.sky],
   },
   dawn: {
     name: 'Dawn',
-    blurb: 'Peach and lilac light.',
+    blurb: 'A hillside path to the sunrise.',
     pro: true,
     stops: [colors.peach, colors.paper, colors.lilacGlow],
   },
   dusk: {
     name: 'Dusk',
-    blurb: 'Quiet evening tones.',
+    blurb: 'A trail of stars after dark.',
     pro: true,
     stops: ['#CDB6C2', '#C5BDD6', colors.periwinkle],
   },

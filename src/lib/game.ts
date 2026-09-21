@@ -60,3 +60,16 @@ export function settle(history: CheckIn[], raw: JudgeResult) {
   if (raw.verdict === 'steady') return { verdict: 'steady' as Verdict, xp: 8, reason: raw.reason };
   return { verdict: 'none' as Verdict, xp: 0, reason: raw.reason };
 }
+
+// How many days in a row you moved forward. Today does not break the streak until it ends.
+export function streakDays(history: CheckIn[]) {
+  const days = new Set(history.filter((c) => c.verdict === 'progress').map((c) => c.day));
+  const d = new Date();
+  if (!days.has(dayKey(d))) d.setDate(d.getDate() - 1);
+  let n = 0;
+  while (days.has(dayKey(d))) {
+    n += 1;
+    d.setDate(d.getDate() - 1);
+  }
+  return n;
+}

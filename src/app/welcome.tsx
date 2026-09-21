@@ -57,7 +57,7 @@ export default function Welcome() {
 
       <View style={[styles.hero, { paddingTop: insets.top }]}>
         <Animated.View entering={FadeIn.duration(900)} style={float}>
-          <HeroFigure size={230} ink={colors.card} face={colors.night} scarf={colors.mint} />
+          <HeroFigure alive size={230} ink={colors.card} face={colors.night} scarf={colors.mint} />
         </Animated.View>
       </View>
 

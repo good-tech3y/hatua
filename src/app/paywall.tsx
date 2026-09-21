@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CaretLeftIcon, CheckIcon, MapTrifoldIcon, PaletteIcon } from 'phosphor-react-native';
-import { HeroFigure } from '../components/art';
+import { PaywallPreview } from '../components/preview';
 import { Backdrop, GlassCard, PillButton, RoundButton } from '../components/ui';
 import { isTestKey, usePro } from '../lib/purchases';
 import { colors, typography } from '../theme';
@@ -48,9 +48,7 @@ export default function Paywall() {
           <CaretLeftIcon size={22} color={colors.navy} weight="bold" />
         </RoundButton>
 
-        <Animated.View entering={ZoomIn.springify().damping(14)} style={styles.avatar}>
-          <HeroFigure size={92} scarf={colors.lemon} />
-        </Animated.View>
+        <PaywallPreview />
         <Animated.Text entering={FadeInDown.delay(150).duration(600)} style={styles.headline}>
           {pro ? 'You have Pro.' : 'Unlock more worlds.'}
         </Animated.Text>
@@ -62,7 +60,7 @@ export default function Paywall() {
           <GlassCard>
             <View style={styles.perk}>
               <MapTrifoldIcon size={22} color={colors.cobalt} weight="bold" />
-              <Text style={styles.perkText}>Three extra realms to play in</Text>
+              <Text style={styles.perkText}>Three living worlds, each its own journey</Text>
             </View>
             <View style={styles.perk}>
               <PaletteIcon size={22} color={colors.cobalt} weight="bold" />
