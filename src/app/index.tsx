@@ -57,7 +57,7 @@ export default function Today() {
           <RoundButton>
             <HatuaMark size={26} />
           </RoundButton>
-          <RoundButton onPress={menu}>
+          <RoundButton onPress={() => router.push('/settings')}>
             <DotsThreeIcon size={26} color={colors.navy} weight="bold" />
           </RoundButton>
         </Animated.View>

@@ -9,41 +9,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Circle, Defs, LinearGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { colors, radii, shadow, typography } from '../theme';
+export { Backdrop } from './backdrop';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
-export function Backdrop({ variant = 'sky' }: { variant?: 'sky' | 'paper' | 'night' }) {
-  return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      <Svg width="100%" height="100%">
-        <Defs>
-          <LinearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={colors.skyDeep} />
-            <Stop offset="0.4" stopColor={colors.sky} />
-            <Stop offset="1" stopColor={colors.skyMist} />
-          </LinearGradient>
-          <RadialGradient id="peach" cx="50%" cy="50%" r="50%">
-            <Stop offset="0" stopColor={colors.peach} stopOpacity="1" />
-            <Stop offset="1" stopColor={colors.peach} stopOpacity="0" />
-          </RadialGradient>
-          <RadialGradient id="lilac" cx="50%" cy="50%" r="50%">
-            <Stop offset="0" stopColor={colors.lilacGlow} stopOpacity="1" />
-            <Stop offset="1" stopColor={colors.lilacGlow} stopOpacity="0" />
-          </RadialGradient>
-        </Defs>
-        {variant === 'sky' && <Rect width="100%" height="100%" fill="url(#sky)" />}
-        {variant === 'night' && <Rect width="100%" height="100%" fill={colors.night} />}
-        {variant === 'paper' && (
-          <>
-            <Rect width="100%" height="100%" fill={colors.paper} />
-            <Circle cx="12%" cy="28%" r="55%" fill="url(#peach)" />
-            <Circle cx="92%" cy="10%" r="50%" fill="url(#lilac)" />
-          </>
-        )}
-      </Svg>
-    </View>
-  );
-}
 
 export function GlassCard({
   children,

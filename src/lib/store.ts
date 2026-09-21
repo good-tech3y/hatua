@@ -4,14 +4,21 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import type { CheckIn, Goal } from './game';
 import { QUEST_DAYS, clamp, healthDelta } from './game';
+import type { RealmId, SkinId } from './realms';
 
 type State = {
   goal: Goal | null;
   checkIns: CheckIn[];
   xp: number;
   health: number;
+  pro: boolean;
+  realm: RealmId;
+  skin: SkinId;
   startGoal: (text: string, titles: string[]) => void;
   addCheckIn: (c: CheckIn) => void;
+  setPro: (pro: boolean) => void;
+  setRealm: (realm: RealmId) => void;
+  setSkin: (skin: SkinId) => void;
   resetAll: () => void;
 };
 
@@ -22,6 +29,9 @@ export const useStore = create<State>()(
       checkIns: [],
       xp: 0,
       health: 60,
+      pro: false,
+      realm: 'meadow',
+      skin: 'mint',
       startGoal: (text, titles) =>
         set({
           goal: {
@@ -49,6 +59,9 @@ export const useStore = create<State>()(
             health: clamp(s.health + healthDelta(c.verdict)),
           };
         }),
+      setPro: (pro) => set({ pro }),
+      setRealm: (realm) => set({ realm }),
+      setSkin: (skin) => set({ skin }),
       resetAll: () => set({ goal: null, checkIns: [], xp: 0, health: 60 }),
     }),
     { name: 'hatua-state', storage: createJSONStorage(() => AsyncStorage) },

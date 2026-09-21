@@ -1,4 +1,6 @@
 import Svg, { Circle, G, Path } from 'react-native-svg';
+import { SKINS } from '../lib/realms';
+import { useStore } from '../lib/store';
 import { colors } from '../theme';
 
 export function HatuaMark({
@@ -25,17 +27,14 @@ export function HatuaMark({
   );
 }
 
-export function HeroFigure({
+type HeroProps = { size?: number; ink?: string; scarf?: string; face?: string };
+
+function HeroBase({
   size = 96,
   ink = colors.navy,
   scarf = colors.mint,
   face = colors.card,
-}: {
-  size?: number;
-  ink?: string;
-  scarf?: string;
-  face?: string;
-}) {
+}: HeroProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 96 96">
       <Path
@@ -63,4 +62,13 @@ export function HeroFigure({
       <Path d="M43 34 H53" stroke={scarf} strokeWidth={5.2} strokeLinecap="round" />
     </Svg>
   );
+}
+
+// The hero wears the scarf the player picked, unless it is a Pro look and Pro is off.
+export function HeroFigure(props: HeroProps) {
+  const skin = useStore((s) => s.skin);
+  const pro = useStore((s) => s.pro);
+  const look = SKINS[skin] ?? SKINS.mint;
+  const scarf = look.pro && !pro ? SKINS.mint.scarf : look.scarf;
+  return <HeroBase scarf={scarf} {...props} />;
 }
