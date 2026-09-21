@@ -1,23 +1,22 @@
 {
   "expo": {
-    "name": "hatua",
+    "name": "Hatua",
     "slug": "hatua",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/hatua-icon.png",
     "scheme": "hatua",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "ios": {
       "icon": "./assets/expo.icon"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./assets/images/hatua-adaptive.png",
+        "backgroundColor": "#D8E6F7"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.hatua.app"
     },
     "web": {
       "output": "static",
@@ -28,13 +27,20 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "backgroundColor": "#D8E6F7",
+          "image": "./assets/images/hatua-splash.png",
+          "imageWidth": 200
         }
       ],
       "expo-font",
-      "expo-status-bar"
+      "expo-status-bar",
+      "expo-notifications",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Hatua uses the camera so you can add proof of your progress."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
