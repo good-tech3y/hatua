@@ -10,21 +10,42 @@ import type { RealmId } from '../lib/realms';
 import { colors } from '../theme';
 import { HeroFigure } from './art';
 import type { Mood } from './art';
-import { Bird, Boat, Cloud, Drift, Float, Lantern, TAU, Twinkle, Waves, rnd, styles } from './scene-parts';
+import { Bird, Drift, Float, Lantern, TAU, Twinkle, Waves, rnd, styles, tint } from './scene-parts';
 import type { Clock } from './scene-parts';
 
-const HILLS: Record<RealmId, [string, string, string]> = {
-  meadow: [colors.blueSoft, colors.teal, colors.mint],
-  lagoon: [colors.blueSoft, colors.teal, colors.card],
-  dawn: [colors.periwinkle, '#C5BDD6', '#CDB6C2'],
-  dusk: [colors.slateSoft, colors.slate, colors.navy],
+const FAR_PTS: [number, number][] = [[0, 0.66], [0.22, 0.4], [0.42, 0.58], [0.64, 0.28], [0.85, 0.52], [1, 0.38]];
+const MID_PTS: [number, number][] = [[0, 0.82], [0.18, 0.55], [0.38, 0.74], [0.58, 0.48], [0.78, 0.7], [1, 0.58]];
+
+const SKY: Record<RealmId, [string, string, string]> = {
+  meadow: ['#2F4858', '#B9793F', '#6B3F4E'],
+  lagoon: ['#1F3350', '#2E5B66', '#3E6B73'],
+  dawn: ['#4A2F4F', '#B85C55', '#D98A4F'],
+  dusk: ['#12182A', '#1E2540', '#2B2F4A'],
 };
-const HILL_HI: Record<RealmId, [string, string, string]> = {
-  meadow: [colors.card, colors.skyMist, colors.mintDeep],
-  lagoon: [colors.card, colors.skyMist, colors.skyMist],
-  dawn: [colors.card, colors.lilacGlow, colors.peach],
-  dusk: [colors.periwinkle, colors.blueSoft, colors.slateSoft],
+const TERRAIN: Record<RealmId, [string, string, string]> = {
+  meadow: ['#2E5048', '#264038', '#5C6B34'],
+  lagoon: ['#22354A', '#1C4A4E', '#2E6068'],
+  dawn: ['#4C2F42', '#7A3F42', '#9C5A3F'],
+  dusk: ['#1B2338', '#232A44', '#2E3350'],
 };
+
+// A shared jagged silhouette, recolored and re-shaded per realm.
+function mountain(W: number, H: number, pts: [number, number][]) {
+  const abs = pts.map(([fx, fy]): [number, number] => [fx * W, fy * H]);
+  let fill = `M0 ${H}`;
+  abs.forEach(([x, y]) => { fill += ` L${x} ${y}`; });
+  fill += ` L${W} ${H} Z`;
+  const facets: string[] = [];
+  for (let i = 1; i < abs.length - 1; i++) {
+    const [px, py] = abs[i];
+    const [lx, ly] = abs[i - 1];
+    const [rx, ry] = abs[i + 1];
+    const base = Math.max(ly, ry);
+    facets.push(`M${lx} ${base} L${px} ${py} L${px} ${base} Z`);
+    facets.push(`M${px} ${py} L${rx} ${base} L${px} ${base} Z`);
+  }
+  return { fill, facets };
+}
 
 function useClock(still: boolean) {
   const t = useSharedValue(still ? 0.3 : 0);
@@ -35,19 +56,13 @@ function useClock(still: boolean) {
   return t;
 }
 
-function ridge(W: number, H: number, y0: number, c1x: number, c1y: number, c2x: number, c2y: number, x3: number, y3: number, x4: number, y4: number) {
-  const top = (dy: number) =>
-    `M0 ${y0 - dy} C ${c1x} ${c1y - dy} ${c2x} ${c2y - dy} ${x3} ${y3 - dy} S ${x4} ${y4 - dy} ${x4} ${y4 - dy}`;
-  return { fill: `${top(0)} V ${H} H 0 Z`, rim: top(4) };
-}
-
 function Sun({ t, cx, cy, r }: { t: Clock; cx: number; cy: number; r: number }) {
   const pulse = useAnimatedStyle(() => ({ transform: [{ scale: 1 + 0.05 * Math.sin(TAU * t.get() * 3) }] }));
   const box = r * 4;
   return (
     <Animated.View style={[styles.abs, { left: cx - box / 2, top: cy - box / 2, width: box, height: box }, pulse]}>
-      <View style={[styles.abs, { left: 0, top: 0, width: box, height: box, borderRadius: box / 2, backgroundColor: colors.lemon, opacity: 0.16 }]} />
-      <View style={[styles.abs, { left: r * 0.5, top: r * 0.5, width: r * 3, height: r * 3, borderRadius: r * 1.5, backgroundColor: colors.lemon, opacity: 0.26 }]} />
+      <View style={[styles.abs, { left: 0, top: 0, width: box, height: box, borderRadius: box / 2, backgroundColor: colors.lemon, opacity: 0.18 }]} />
+      <View style={[styles.abs, { left: r * 0.5, top: r * 0.5, width: r * 3, height: r * 3, borderRadius: r * 1.5, backgroundColor: colors.lemon, opacity: 0.3 }]} />
       <View style={[styles.abs, { left: r, top: r, width: r * 2, height: r * 2, borderRadius: r, backgroundColor: colors.lemon }]} />
     </Animated.View>
   );
@@ -67,15 +82,8 @@ type AmbientProps = { realm: RealmId; t: Clock; W: number; H: number; lvl: numbe
 
 function Far({ realm, t, W, H, lvl }: AmbientProps) {
   const span = W + 180;
-  const clouds = realm === 'lagoon' || realm === 'dawn' ? 2 : 1 + lvl;
-  const tint = realm === 'dawn' ? colors.lilacGlow : realm === 'dusk' ? '#C5BDD6' : colors.card;
   return (
     <>
-      {Array.from({ length: clouds }, (_, i) => (
-        <Drift key={`c${i}`} t={t} span={span} top={10 + rnd(i, 1) * H * 0.28} speed={1} phase={rnd(i, 2)}>
-          <Cloud s={0.7 + rnd(i, 3) * 0.6} tint={tint} />
-        </Drift>
-      ))}
       {realm === 'dusk'
         ? Array.from({ length: 6 + lvl * 4 }, (_, i) => (
             <Twinkle key={`s${i}`} t={t} left={rnd(i, 4) * W} top={rnd(i, 5) * H * 0.5} size={2 + rnd(i, 6) * 2.2}
@@ -85,7 +93,7 @@ function Far({ realm, t, W, H, lvl }: AmbientProps) {
       {realm === 'dawn'
         ? Array.from({ length: 1 + lvl }, (_, i) => (
             <Drift key={`b${i}`} t={t} span={span} top={30 + rnd(i, 9) * H * 0.22} speed={1} phase={rnd(i, 10)}>
-              <Bird t={t} n={30 + i * 6} phase={rnd(i, 11)} color={colors.slate} />
+              <Bird t={t} n={30 + i * 6} phase={rnd(i, 11)} color={colors.card} />
             </Drift>
           ))
         : null}
@@ -101,17 +109,6 @@ const Firefly = () => (
 );
 
 function Near({ realm, t, W, H, lvl }: AmbientProps) {
-  if (realm === 'meadow') {
-    return (
-      <>
-        {Array.from({ length: 3 + lvl * 2 }, (_, i) => (
-          <Float key={i} t={t} left={rnd(i, 21) * W} top={H * 0.55 + rnd(i, 22) * H * 0.3} range={70} speed={1 + (i % 2)} phase={rnd(i, 23)}>
-            <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: i % 2 ? colors.lemon : colors.card }} />
-          </Float>
-        ))}
-      </>
-    );
-  }
   if (realm === 'lagoon') {
     return (
       <>
@@ -123,18 +120,15 @@ function Near({ realm, t, W, H, lvl }: AmbientProps) {
       </>
     );
   }
-  if (realm === 'dusk') {
-    return (
-      <>
-        {Array.from({ length: 3 + lvl * 2 }, (_, i) => (
-          <Float key={i} t={t} left={rnd(i, 41) * W} top={H * 0.6 + rnd(i, 42) * H * 0.25} range={90} speed={1 + (i % 2)} phase={rnd(i, 43)}>
-            <Firefly />
-          </Float>
-        ))}
-      </>
-    );
-  }
-  return null;
+  return (
+    <>
+      {Array.from({ length: 3 + lvl * 2 }, (_, i) => (
+        <Float key={i} t={t} left={rnd(i, 41) * W} top={H * 0.6 + rnd(i, 42) * H * 0.25} range={90} speed={1 + (i % 2)} phase={rnd(i, 43)}>
+          <Firefly />
+        </Float>
+      ))}
+    </>
+  );
 }
 type Props = {
   realm: RealmId; width: number; height: number; total: number; current: number; level: number;
@@ -149,9 +143,8 @@ export function RealmScene({
   const lvl = Math.min(Math.max(level, 1), 3);
   const n = Math.max(total, 1);
   const cur = Math.min(current, n);
-  const stops = REALMS[realm].stops;
-  const [far, mid, ground] = HILLS[realm];
-  const [farHi, midHi, groundHi] = HILL_HI[realm];
+  const sky = SKY[realm];
+  const [far, mid, ground] = TERRAIN[realm];
   const kind = realm === 'lagoon' ? 'stone' : realm === 'dusk' ? 'star' : 'post';
 
   const S = Math.min(70, H * 0.28);
@@ -165,8 +158,8 @@ export function RealmScene({
   const yLeft = ys[0] - slope * xs[0];
   const yRight = ys[0] + slope * (W - xs[0]);
 
-  const farR = ridge(W, H, H * 0.62, W * 0.25, H * 0.46, W * 0.5, H * 0.7, W * 0.75, H * 0.54, W, H * 0.5);
-  const midR = ridge(W, H, H * 0.75, W * 0.3, H * 0.6, W * 0.6, H * 0.82, W, H * 0.64, W, H * 0.64);
+  const farM = mountain(W, H, FAR_PTS);
+  const midM = mountain(W, H, MID_PTS);
 
   const pos = useSharedValue(intro ? 0 : cur);
   useEffect(() => {
@@ -204,11 +197,11 @@ export function RealmScene({
     : `M${xs[0]} ${ys[0] + 9} L${xs[n]} ${ys[n] + 9}`;
 
   return (
-    <View style={{ width: W, height: H, borderRadius: radius, overflow: 'hidden', backgroundColor: stops[1] }}>
+    <View style={{ width: W, height: H, borderRadius: radius, overflow: 'hidden', backgroundColor: sky[1] }}>
       <Svg width={W} height={H} style={styles.abs}>
         <Defs>
           <LinearGradient id={`sky-${realm}`} x1="0" y1="0" x2="0" y2="1">
-            {stops.map((c, i) => (<Stop key={i} offset={i / 2} stopColor={c} />))}
+            {sky.map((c, i) => (<Stop key={i} offset={i / 2} stopColor={c} />))}
           </LinearGradient>
         </Defs>
         <Path d={`M0 0 H${W} V${H} H0 Z`} fill={`url(#sky-${realm})`} />
@@ -222,14 +215,14 @@ export function RealmScene({
       <Far realm={realm} t={t} W={W} H={H} lvl={lvl} />
 
       <Svg width={W} height={H} style={styles.abs}>
-        <Path d={farR.fill} fill={far} />
-        <Path d={farR.rim} stroke={farHi} strokeWidth={2.5} strokeLinecap="round" fill="none" opacity={0.55} />
-        <Path d={midR.fill} fill={mid} />
-        <Path d={midR.rim} stroke={midHi} strokeWidth={2.5} strokeLinecap="round" fill="none" opacity={0.55} />
+        <Path d={farM.fill} fill={far} />
+        {farM.facets.map((d, i) => (<Path key={i} d={d} fill={i % 2 === 0 ? tint(far, -14) : tint(far, 16)} />))}
+        <Path d={midM.fill} fill={mid} />
+        {midM.facets.map((d, i) => (<Path key={i} d={d} fill={i % 2 === 0 ? tint(mid, -14) : tint(mid, 16)} />))}
         {hero && realm !== 'lagoon' ? (
           <>
             <Path d={`M0 ${yLeft + 12} L${W} ${yRight + 12} V ${H} H 0 Z`} fill={ground} />
-            <Path d={`M0 ${yLeft + 9} L${W} ${yRight + 9}`} stroke={groundHi} strokeWidth={2.5} strokeLinecap="round" opacity={0.6} />
+            <Path d={`M0 ${yLeft + 9} L${W} ${yRight + 9}`} stroke={tint(ground, 22)} strokeWidth={2.5} strokeLinecap="round" opacity={0.6} />
           </>
         ) : null}
         {hero && n >= (star ? 2 : 1) ? (
@@ -240,10 +233,9 @@ export function RealmScene({
 
       {realm === 'lagoon' ? (
         <>
-          <Drift t={t} span={W + 180} top={H * 0.47} speed={1} phase={0.15}><Boat t={t} /></Drift>
-          <Waves t={t} width={W} top={H * 0.58} height={H} color={colors.blueSoft} n={3} amp={4} len={110} />
-          <Waves t={t} width={W} top={H * 0.68} height={H} color={colors.periwinkle} n={5} amp={5} len={90} />
-          <Waves t={t} width={W} top={H * 0.79} height={H} color={colors.card} opacity={0.75} n={7} amp={5} len={70} />
+          <Waves t={t} width={W} top={H * 0.58} height={H} color={tint(ground, -10)} n={3} amp={4} len={110} />
+          <Waves t={t} width={W} top={H * 0.68} height={H} color={ground} n={5} amp={5} len={90} />
+          <Waves t={t} width={W} top={H * 0.79} height={H} color={tint(ground, 24)} opacity={0.85} n={7} amp={5} len={70} />
         </>
       ) : null}
 
@@ -254,7 +246,7 @@ export function RealmScene({
       <Near realm={realm} t={t} W={W} H={H} lvl={lvl} />
 
       {hero ? (
-        <Animated.View style={[styles.abs, { left: 0, top: 0, width: 30, height: 10, borderRadius: 5, backgroundColor: colors.navy }, shadowStyle]} />
+        <Animated.View style={[styles.abs, { left: 0, top: 0, width: 30, height: 10, borderRadius: 5, backgroundColor: colors.night }, shadowStyle]} />
       ) : null}
       {hero ? (
         <Animated.View style={[styles.abs, { left: 0, top: 0 }, heroStyle]}>
@@ -265,8 +257,8 @@ export function RealmScene({
       <Svg width={W} height={H} style={styles.abs} pointerEvents="none">
         <Defs>
           <RadialGradient id="vignette" cx="50%" cy="42%" r="75%">
-            <Stop offset="0.55" stopColor={colors.navy} stopOpacity="0" />
-            <Stop offset="1" stopColor={colors.navy} stopOpacity="0.22" />
+            <Stop offset="0.5" stopColor={colors.night} stopOpacity="0" />
+            <Stop offset="1" stopColor={colors.night} stopOpacity="0.35" />
           </RadialGradient>
         </Defs>
         <Rect width="100%" height="100%" fill="url(#vignette)" />

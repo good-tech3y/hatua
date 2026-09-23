@@ -162,3 +162,13 @@ export function Lantern({ x, y, lit, big, kind }: LanternProps) {
     </>
   );
 }
+
+// Lightens (positive) or darkens (negative) a hex color by a flat amount per channel.
+export function tint(hex: string, amt: number) {
+  const n = parseInt(hex.slice(1), 16);
+  const clamp = (v: number) => Math.max(0, Math.min(255, v));
+  const r = clamp(((n >> 16) & 255) + amt);
+  const g = clamp(((n >> 8) & 255) + amt);
+  const b = clamp((n & 255) + amt);
+  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+}

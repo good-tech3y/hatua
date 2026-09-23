@@ -37,8 +37,8 @@ export const REALMS: Record<
 };
 
 export const SKINS: Record<SkinId, { name: string; scarf: string; pro: boolean }> = {
-  mint: { name: 'Mint', scarf: colors.mint, pro: false },
-  lemon: { name: 'Lemon', scarf: colors.lemon, pro: true },
-  violet: { name: 'Violet', scarf: colors.violet, pro: true },
-  cobalt: { name: 'Cobalt', scarf: colors.cobalt, pro: true },
+  mint: { name: 'Terracotta', scarf: colors.terracotta, pro: false },
+  lemon: { name: 'Moss', scarf: colors.moss, pro: true },
+  violet: { name: 'Plum', scarf: colors.plum, pro: true },
+  cobalt: { name: 'Denim', scarf: colors.denim, pro: true },
 };

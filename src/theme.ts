@@ -30,6 +30,10 @@ export const colors = {
 
   night: '#0B0B0B',
   white: '#FFFFFF',
+  terracotta: '#C97455',
+  moss: '#4B6B4A',
+  plum: '#6B4361',
+  denim: '#3E5C78',
 } as const;
 
 export const fonts = {
