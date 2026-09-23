@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,6 +9,7 @@ import { RealmPicker, SkinPicker } from '../components/pickers';
 import { Backdrop, Chip, GlassCard, PillButton, RoundButton } from '../components/ui';
 import { useAccess } from '../lib/access';
 import { levelOf, longestStreak, realDays, streakDays } from '../lib/game';
+import { usePro } from '../lib/purchases';
 import { useStore } from '../lib/store';
 import { colors, typography } from '../theme';
 
@@ -16,6 +17,7 @@ export default function Settings() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { unlocked, pro, trialActive, daysLeft } = useAccess();
+  const { demo, demoSet } = usePro();
   const name = useStore((s) => s.name);
   const setName = useStore((s) => s.setName);
   const installedAt = useStore((s) => s.installedAt);
@@ -33,9 +35,15 @@ export default function Settings() {
     : 'today';
 
   function startOver() {
-    Alert.alert('Start over?', 'This clears your goal, your hero and your check-ins from this phone.', [
+    const msg = 'This clears your goal, your hero and your check-ins from this phone.';
+    const go = () => { resetAll(); router.replace('/welcome'); };
+    if (Platform.OS === 'web') {
+      if (window.confirm(`Start over?\n\n${msg}`)) go();
+      return;
+    }
+    Alert.alert('Start over?', msg, [
       { text: 'Keep going', style: 'cancel' },
-      { text: 'Start over', style: 'destructive', onPress: () => { resetAll(); router.replace('/welcome'); } },
+      { text: 'Start over', style: 'destructive', onPress: go },
     ]);
   }
 
@@ -103,6 +111,13 @@ export default function Settings() {
                   : 'Your trial has ended. Subscribe to keep every realm and look.'}
             </Text>
             {!pro ? <PillButton label="See Pro" onPress={() => router.push('/paywall')} /> : null}
+            {pro && demo ? (
+              <Pressable onPress={() => demoSet(false)}>
+                <Text style={{ ...typography.label, color: colors.cobalt, textAlign: 'center', marginTop: 10 }}>
+                  Reset demo Pro (testing)
+                </Text>
+              </Pressable>
+            ) : null}
           </GlassCard>
         </Animated.View>
 
