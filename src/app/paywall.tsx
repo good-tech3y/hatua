@@ -14,17 +14,16 @@ import { colors, typography } from '../theme';
 type Card = { id: string; period: string; price: string; badge?: string; note?: string; pkg?: PurchasesPackage };
 
 const DEMO_CARDS: Card[] = [
-  { id: 'demo-m', period: 'Monthly', price: '$4.99' },
-  { id: 'demo-y', period: 'Yearly', price: '$39.99', badge: 'Best value', note: 'Save 33% vs monthly' },
-  { id: 'demo-l', period: 'Lifetime', price: '$79.99', badge: 'One time' },
+  { id: 'demo-m', period: 'Monthly', price: '$2.00' },
+  { id: 'demo-y', period: 'Yearly', price: '$21.60', badge: 'Best value', note: 'Save 10% vs monthly' },
 ];
 
-const periodOf = (p: PurchasesPackage) =>
-  p.packageType === 'ANNUAL' ? 'Yearly' : p.packageType === 'LIFETIME' ? 'Lifetime' : 'Monthly';
+const periodOf = (p: PurchasesPackage) => (p.packageType === 'ANNUAL' ? 'Yearly' : 'Monthly');
 
 function cardsFromPackages(pkgs: PurchasesPackage[]): Card[] {
-  const monthly = pkgs.find((p) => p.packageType === 'MONTHLY');
-  return pkgs.map((p) => {
+  const live = pkgs.filter((p) => p.packageType !== 'LIFETIME');
+  const monthly = live.find((p) => p.packageType === 'MONTHLY');
+  return live.map((p) => {
     const period = periodOf(p);
     let badge: string | undefined;
     let note: string | undefined;
@@ -35,7 +34,6 @@ function cardsFromPackages(pkgs: PurchasesPackage[]): Card[] {
         if (save > 0) note = `Save ${save}% vs monthly`;
       }
     }
-    if (period === 'Lifetime') badge = 'One time';
     return { id: p.identifier, period, price: p.product.priceString, badge, note, pkg: p };
   });
 }
