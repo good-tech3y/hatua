@@ -1,16 +1,16 @@
 import { StyleSheet, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
+import { useAccess } from '../lib/access';
 import { REALMS } from '../lib/realms';
 import { useStore } from '../lib/store';
 import { colors } from '../theme';
 
 export function Backdrop({ variant = 'sky' }: { variant?: 'sky' | 'night' }) {
   const realm = useStore((s) => s.realm);
-  const pro = useStore((s) => s.pro);
+  const { unlocked } = useAccess();
   const r = REALMS[realm] ?? REALMS.meadow;
-  const usable = !r.pro || pro ? r : REALMS.meadow;
-  const stops: string[] =
-    variant === 'night' ? [colors.night, colors.night, colors.night] : [...usable.stops];
+  const usable = !r.pro || unlocked ? r : REALMS.meadow;
+  const stops: string[] = variant === 'night' ? [colors.night, colors.night, colors.night] : [...usable.stops];
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">

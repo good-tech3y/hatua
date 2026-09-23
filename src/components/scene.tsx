@@ -1,16 +1,10 @@
 import { useEffect } from 'react';
 import { View } from 'react-native';
 import Animated, {
-  Easing,
-  interpolate,
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withRepeat,
-  withSequence,
-  withTiming,
+  Easing, interpolate, useAnimatedStyle, useSharedValue,
+  withDelay, withRepeat, withSequence, withTiming,
 } from 'react-native-reanimated';
-import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
+import Svg, { Defs, LinearGradient, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { REALMS } from '../lib/realms';
 import type { RealmId } from '../lib/realms';
 import { colors } from '../theme';
@@ -19,12 +13,17 @@ import type { Mood } from './art';
 import { Bird, Boat, Cloud, Drift, Float, Lantern, TAU, Twinkle, Waves, rnd, styles } from './scene-parts';
 import type { Clock } from './scene-parts';
 
-// Far hills, near hills, ground. Every color comes from the reference palette.
 const HILLS: Record<RealmId, [string, string, string]> = {
   meadow: [colors.blueSoft, colors.teal, colors.mint],
   lagoon: [colors.blueSoft, colors.teal, colors.card],
   dawn: [colors.periwinkle, '#C5BDD6', '#CDB6C2'],
   dusk: [colors.slateSoft, colors.slate, colors.navy],
+};
+const HILL_HI: Record<RealmId, [string, string, string]> = {
+  meadow: [colors.card, colors.skyMist, colors.mintDeep],
+  lagoon: [colors.card, colors.skyMist, colors.skyMist],
+  dawn: [colors.card, colors.lilacGlow, colors.peach],
+  dusk: [colors.periwinkle, colors.blueSoft, colors.slateSoft],
 };
 
 function useClock(still: boolean) {
@@ -34,6 +33,12 @@ function useClock(still: boolean) {
     t.set(withRepeat(withTiming(1, { duration: 24000, easing: Easing.linear }), -1, false));
   }, [still, t]);
   return t;
+}
+
+function ridge(W: number, H: number, y0: number, c1x: number, c1y: number, c2x: number, c2y: number, x3: number, y3: number, x4: number, y4: number) {
+  const top = (dy: number) =>
+    `M0 ${y0 - dy} C ${c1x} ${c1y - dy} ${c2x} ${c2y - dy} ${x3} ${y3 - dy} S ${x4} ${y4 - dy} ${x4} ${y4 - dy}`;
+  return { fill: `${top(0)} V ${H} H 0 Z`, rim: top(4) };
 }
 
 function Sun({ t, cx, cy, r }: { t: Clock; cx: number; cy: number; r: number }) {
@@ -73,16 +78,8 @@ function Far({ realm, t, W, H, lvl }: AmbientProps) {
       ))}
       {realm === 'dusk'
         ? Array.from({ length: 6 + lvl * 4 }, (_, i) => (
-            <Twinkle
-              key={`s${i}`}
-              t={t}
-              left={rnd(i, 4) * W}
-              top={rnd(i, 5) * H * 0.5}
-              size={2 + rnd(i, 6) * 2.2}
-              n={2 + Math.floor(rnd(i, 7) * 4)}
-              phase={rnd(i, 8)}
-              color={i % 4 === 0 ? colors.lemon : colors.card}
-            />
+            <Twinkle key={`s${i}`} t={t} left={rnd(i, 4) * W} top={rnd(i, 5) * H * 0.5} size={2 + rnd(i, 6) * 2.2}
+              n={2 + Math.floor(rnd(i, 7) * 4)} phase={rnd(i, 8)} color={i % 4 === 0 ? colors.lemon : colors.card} />
           ))
         : null}
       {realm === 'dawn'
@@ -139,19 +136,9 @@ function Near({ realm, t, W, H, lvl }: AmbientProps) {
   }
   return null;
 }
-
 type Props = {
-  realm: RealmId;
-  width: number;
-  height: number;
-  total: number;
-  current: number;
-  level: number;
-  mood?: Mood;
-  intro?: boolean;
-  still?: boolean;
-  hero?: boolean;
-  radius?: number;
+  realm: RealmId; width: number; height: number; total: number; current: number; level: number;
+  mood?: Mood; intro?: boolean; still?: boolean; hero?: boolean; radius?: number;
 };
 
 export function RealmScene({
@@ -164,6 +151,7 @@ export function RealmScene({
   const cur = Math.min(current, n);
   const stops = REALMS[realm].stops;
   const [far, mid, ground] = HILLS[realm];
+  const [farHi, midHi, groundHi] = HILL_HI[realm];
   const kind = realm === 'lagoon' ? 'stone' : realm === 'dusk' ? 'star' : 'post';
 
   const S = Math.min(70, H * 0.28);
@@ -177,18 +165,16 @@ export function RealmScene({
   const yLeft = ys[0] - slope * xs[0];
   const yRight = ys[0] + slope * (W - xs[0]);
 
+  const farR = ridge(W, H, H * 0.62, W * 0.25, H * 0.46, W * 0.5, H * 0.7, W * 0.75, H * 0.54, W, H * 0.5);
+  const midR = ridge(W, H, H * 0.75, W * 0.3, H * 0.6, W * 0.6, H * 0.82, W, H * 0.64, W, H * 0.64);
+
   const pos = useSharedValue(intro ? 0 : cur);
   useEffect(() => {
     if (intro) {
-      pos.set(
-        withDelay(
-          700,
-          withSequence(
-            withTiming(n, { duration: 700 * n, easing: Easing.inOut(Easing.quad) }),
-            withDelay(500, withTiming(0, { duration: 900, easing: Easing.inOut(Easing.cubic) })),
-          ),
-        ),
-      );
+      pos.set(withDelay(700, withSequence(
+        withTiming(n, { duration: 700 * n, easing: Easing.inOut(Easing.quad) }),
+        withDelay(500, withTiming(0, { duration: 900, easing: Easing.inOut(Easing.cubic) })),
+      )));
     } else {
       pos.set(withTiming(cur, { duration: 900, easing: Easing.inOut(Easing.cubic) }));
     }
@@ -201,6 +187,16 @@ export function RealmScene({
     const hop = Math.abs(Math.sin(v * Math.PI)) * 14;
     return { transform: [{ translateX: x - S / 2 - 12 }, { translateY: y + 8 - S * 0.865 - hop }] };
   });
+  const shadowStyle = useAnimatedStyle(() => {
+    const v = pos.get();
+    const x = interpolate(v, idx, xs);
+    const y = interpolate(v, idx, ys);
+    const hop = Math.abs(Math.sin(v * Math.PI));
+    return {
+      opacity: 0.32 - hop * 0.16,
+      transform: [{ translateX: x - 15 }, { translateY: y + 5 }, { scale: 1 - hop * 0.35 }],
+    };
+  });
 
   const star = kind === 'star';
   const trail = star
@@ -212,9 +208,7 @@ export function RealmScene({
       <Svg width={W} height={H} style={styles.abs}>
         <Defs>
           <LinearGradient id={`sky-${realm}`} x1="0" y1="0" x2="0" y2="1">
-            {stops.map((c, i) => (
-              <Stop key={i} offset={i / 2} stopColor={c} />
-            ))}
+            {stops.map((c, i) => (<Stop key={i} offset={i / 2} stopColor={c} />))}
           </LinearGradient>
         </Defs>
         <Path d={`M0 0 H${W} V${H} H0 Z`} fill={`url(#sky-${realm})`} />
@@ -228,32 +222,25 @@ export function RealmScene({
       <Far realm={realm} t={t} W={W} H={H} lvl={lvl} />
 
       <Svg width={W} height={H} style={styles.abs}>
-        <Path
-          d={`M0 ${H * 0.62} C ${W * 0.25} ${H * 0.46} ${W * 0.5} ${H * 0.7} ${W * 0.75} ${H * 0.54} S ${W} ${H * 0.5} ${W} ${H * 0.5} V ${H} H 0 Z`}
-          fill={far}
-        />
-        <Path d={`M0 ${H * 0.74} C ${W * 0.3} ${H * 0.6} ${W * 0.6} ${H * 0.82} ${W} ${H * 0.64} V ${H} H 0 Z`} fill={mid} />
+        <Path d={farR.fill} fill={far} />
+        <Path d={farR.rim} stroke={farHi} strokeWidth={2.5} strokeLinecap="round" fill="none" opacity={0.55} />
+        <Path d={midR.fill} fill={mid} />
+        <Path d={midR.rim} stroke={midHi} strokeWidth={2.5} strokeLinecap="round" fill="none" opacity={0.55} />
         {hero && realm !== 'lagoon' ? (
-          <Path d={`M0 ${yLeft + 12} L${W} ${yRight + 12} V ${H} H 0 Z`} fill={ground} />
+          <>
+            <Path d={`M0 ${yLeft + 12} L${W} ${yRight + 12} V ${H} H 0 Z`} fill={ground} />
+            <Path d={`M0 ${yLeft + 9} L${W} ${yRight + 9}`} stroke={groundHi} strokeWidth={2.5} strokeLinecap="round" opacity={0.6} />
+          </>
         ) : null}
         {hero && n >= (star ? 2 : 1) ? (
-          <Path
-            d={trail}
-            stroke={colors.card}
-            strokeOpacity={star ? 0.5 : 0.75}
-            strokeWidth={star ? 1.5 : 3}
-            strokeLinecap="round"
-            strokeDasharray={star ? '3 6' : '0.1 9'}
-            fill="none"
-          />
+          <Path d={trail} stroke={colors.card} strokeOpacity={star ? 0.5 : 0.75} strokeWidth={star ? 1.5 : 3}
+            strokeLinecap="round" strokeDasharray={star ? '3 6' : '0.1 9'} fill="none" />
         ) : null}
       </Svg>
 
       {realm === 'lagoon' ? (
         <>
-          <Drift t={t} span={W + 180} top={H * 0.47} speed={1} phase={0.15}>
-            <Boat t={t} />
-          </Drift>
+          <Drift t={t} span={W + 180} top={H * 0.47} speed={1} phase={0.15}><Boat t={t} /></Drift>
           <Waves t={t} width={W} top={H * 0.58} height={H} color={colors.blueSoft} n={3} amp={4} len={110} />
           <Waves t={t} width={W} top={H * 0.68} height={H} color={colors.periwinkle} n={5} amp={5} len={90} />
           <Waves t={t} width={W} top={H * 0.79} height={H} color={colors.card} opacity={0.75} n={7} amp={5} len={70} />
@@ -261,18 +248,29 @@ export function RealmScene({
       ) : null}
 
       {hero
-        ? xs.slice(1).map((x, k) => (
-            <Lantern key={k} x={x} y={ys[k + 1]} lit={cur >= k + 1} big={k + 1 === n} kind={kind} />
-          ))
+        ? xs.slice(1).map((x, k) => (<Lantern key={k} x={x} y={ys[k + 1]} lit={cur >= k + 1} big={k + 1 === n} kind={kind} />))
         : null}
 
       <Near realm={realm} t={t} W={W} H={H} lvl={lvl} />
 
       {hero ? (
+        <Animated.View style={[styles.abs, { left: 0, top: 0, width: 30, height: 10, borderRadius: 5, backgroundColor: colors.navy }, shadowStyle]} />
+      ) : null}
+      {hero ? (
         <Animated.View style={[styles.abs, { left: 0, top: 0 }, heroStyle]}>
           <HeroFigure size={S} alive mood={mood} />
         </Animated.View>
       ) : null}
+
+      <Svg width={W} height={H} style={styles.abs} pointerEvents="none">
+        <Defs>
+          <RadialGradient id="vignette" cx="50%" cy="42%" r="75%">
+            <Stop offset="0.55" stopColor={colors.navy} stopOpacity="0" />
+            <Stop offset="1" stopColor={colors.navy} stopOpacity="0.22" />
+          </RadialGradient>
+        </Defs>
+        <Rect width="100%" height="100%" fill="url(#vignette)" />
+      </Svg>
     </View>
   );
 }

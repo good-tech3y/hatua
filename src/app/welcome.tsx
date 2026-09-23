@@ -57,7 +57,7 @@ export default function Welcome() {
 
       <View style={[styles.hero, { paddingTop: insets.top }]}>
         <Animated.View entering={FadeIn.duration(900)} style={float}>
-          <HeroFigure alive size={230} ink={colors.card} face={colors.night} scarf={colors.mint} />
+          <HeroFigure alive size={230} ink={colors.card} body={colors.mint} />
         </Animated.View>
       </View>
 
@@ -74,7 +74,7 @@ export default function Welcome() {
             tone="light"
             label="Begin"
             icon={<ArrowRightIcon size={18} color={colors.ink} weight="bold" />}
-            onPress={() => router.replace('/goal')}
+            onPress={() => router.replace('/name')}
           />
         </Animated.View>
         <Text style={styles.note}>Everything you save stays on your phone.</Text>

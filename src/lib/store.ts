@@ -7,43 +7,31 @@ import { QUEST_DAYS, clamp, healthDelta } from './game';
 import type { RealmId, SkinId } from './realms';
 
 type State = {
-  goal: Goal | null;
-  checkIns: CheckIn[];
-  xp: number;
-  health: number;
-  pro: boolean;
-  realm: RealmId;
-  skin: SkinId;
+  goal: Goal | null; checkIns: CheckIn[]; xp: number; health: number; pro: boolean;
+  realm: RealmId; skin: SkinId; name: string; installedAt: number | null;
   startGoal: (text: string, titles: string[]) => void;
   addCheckIn: (c: CheckIn) => void;
   setPro: (pro: boolean) => void;
   setRealm: (realm: RealmId) => void;
   setSkin: (skin: SkinId) => void;
+  setName: (name: string) => void;
+  setInstalledAt: (t: number) => void;
   resetAll: () => void;
 };
 
 export const useStore = create<State>()(
   persist(
     (set) => ({
-      goal: null,
-      checkIns: [],
-      xp: 0,
-      health: 60,
-      pro: false,
-      realm: 'meadow',
-      skin: 'mint',
+      goal: null, checkIns: [], xp: 0, health: 60, pro: false,
+      realm: 'meadow', skin: 'mint', name: '', installedAt: null,
       startGoal: (text, titles) =>
         set({
           goal: {
             text,
             createdAt: Date.now(),
-            quests: titles
-              .slice(0, 7)
-              .map((title, i) => ({ id: `q${i}`, title, need: QUEST_DAYS, done: 0 })),
+            quests: titles.slice(0, 7).map((title, i) => ({ id: `q${i}`, title, need: QUEST_DAYS, done: 0 })),
           },
-          checkIns: [],
-          xp: 0,
-          health: 60,
+          checkIns: [], xp: 0, health: 60,
         }),
       addCheckIn: (c) =>
         set((s) => {
@@ -62,6 +50,8 @@ export const useStore = create<State>()(
       setPro: (pro) => set({ pro }),
       setRealm: (realm) => set({ realm }),
       setSkin: (skin) => set({ skin }),
+      setName: (name) => set({ name: name.slice(0, 24) }),
+      setInstalledAt: (t) => set((s) => (s.installedAt ? s : { installedAt: t })),
       resetAll: () => set({ goal: null, checkIns: [], xp: 0, health: 60 }),
     }),
     { name: 'hatua-state', storage: createJSONStorage(() => AsyncStorage) },

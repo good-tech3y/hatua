@@ -73,3 +73,18 @@ export function streakDays(history: CheckIn[]) {
   }
   return n;
 }
+
+export function longestStreak(history: CheckIn[]) {
+  const days = Array.from(new Set(history.filter((c) => c.verdict === 'progress').map((c) => c.day))).sort();
+  if (days.length === 0) return 0;
+  let best = 1, run = 1;
+  for (let i = 1; i < days.length; i++) {
+    const diff = Math.round((new Date(days[i]).getTime() - new Date(days[i - 1]).getTime()) / 86400000);
+    run = diff === 1 ? run + 1 : 1;
+    if (run > best) best = run;
+  }
+  return best;
+}
+export function realDays(history: CheckIn[]) {
+  return new Set(history.filter((c) => c.verdict === 'progress').map((c) => c.day)).size;
+}

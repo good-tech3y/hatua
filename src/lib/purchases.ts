@@ -18,7 +18,7 @@ function init() {
 }
 
 const isActive = (info: CustomerInfo) => Object.keys(info.entitlements.active).length > 0;
-const ORDER = ['ANNUAL', 'MONTHLY', 'LIFETIME'];
+const ORDER = ['MONTHLY', 'ANNUAL', 'LIFETIME'];
 
 // Keeps the saved Pro flag in step with RevenueCat.
 export function useProSync() {
