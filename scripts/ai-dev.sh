@@ -36,8 +36,14 @@ if [ -z "$URL" ]; then
   exit 1
 fi
 
+if grep -q '^EXPO_PUBLIC_AI_URL=' .env 2>/dev/null; then
+  sed -i "s|^EXPO_PUBLIC_AI_URL=.*|EXPO_PUBLIC_AI_URL=$URL|" .env
+else
+  printf '\nEXPO_PUBLIC_AI_URL=%s\n' "$URL" >> .env
+fi
+
 echo ""
 echo "AI server ready at: $URL"
-echo "Put this in your .env as EXPO_PUBLIC_AI_URL=$URL"
+echo "Expo AI URL saved to .env. Restart Expo to load it."
 echo ""
 wait

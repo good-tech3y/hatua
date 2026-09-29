@@ -13,7 +13,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/hatua-adaptive.png",
-        "backgroundColor": "#D8E6F7"
+        "backgroundColor": "#12182A"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.hatua.app",
@@ -30,7 +30,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#D8E6F7",
+          "backgroundColor": "#12182A",
           "image": "./assets/images/hatua-splash.png",
           "imageWidth": 200
         }

@@ -6,8 +6,8 @@ fs.mkdirSync(dir, { recursive: true });
 
 const mark = (x, y, s) =>
   `<g transform="translate(${x} ${y}) scale(${s})">` +
-  `<path d="M7 41 H18 V31 H28 V21 H35" fill="none" stroke="#1A67B0" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>` +
-  `<circle cx="39.5" cy="9" r="4.5" fill="#F8FFA0" stroke="#1A67B0" stroke-width="3"/>` +
+  `<path d="M7 41 H18 V31 H28 V21 H35" fill="none" stroke="#FCFEFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>` +
+  `<circle cx="39.5" cy="9" r="4.5" fill="#F8FFA0" stroke="#FCFEFF" stroke-width="3"/>` +
   `</g>`;
 
 const wrap = (bg, body) =>
@@ -17,7 +17,7 @@ const wrap = (bg, body) =>
   `</svg>`;
 
 const jobs = [
-  ['hatua-icon.png', wrap('#D8E6F7', mark(162, 187, 14))],
+  ['hatua-icon.png', wrap('#12182A', mark(162, 187, 14))],
   ['hatua-adaptive.png', wrap(null, mark(220, 241, 11.67))],
   ['hatua-splash.png', wrap(null, mark(62, 94, 18))],
 ];
