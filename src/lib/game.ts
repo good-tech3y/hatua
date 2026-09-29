@@ -2,16 +2,7 @@ export type Verdict = 'progress' | 'steady' | 'none';
 export type Quest = { id: string; title: string; need: number; done: number };
 export type Goal = { text: string; quests: Quest[]; createdAt: number };
 export type JudgeResult = { verdict: Verdict; score: number; reason: string };
-export type CheckIn = {
-  id: string;
-  at: number;
-  day: string;
-  text: string;
-  verdict: Verdict;
-  score: number;
-  reason: string;
-  xp: number;
-};
+export type CheckIn = { id: string; at: number; day: string; text: string; verdict: Verdict; score: number; reason: string; xp: number; photoUri?: string };
 
 export const QUEST_DAYS = 2;
 

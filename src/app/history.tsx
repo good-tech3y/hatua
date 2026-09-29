@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -48,10 +48,15 @@ export default function History() {
                     {new Date(c.at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                   </Text>
                 </View>
-                <Text style={styles.text} numberOfLines={4}>
-                  {c.text}
-                </Text>
-                <Text style={styles.reason}>{c.reason}</Text>
+                <View style={styles.body}>
+                  {c.photoUri ? <Image source={{ uri: c.photoUri }} style={styles.thumb} /> : null}
+                  <View style={styles.bodyText}>
+                    <Text style={styles.text} numberOfLines={4}>
+                      {c.text}
+                    </Text>
+                    <Text style={styles.reason}>{c.reason}</Text>
+                  </View>
+                </View>
               </GlassCard>
             </Animated.View>
           ))
@@ -67,6 +72,9 @@ const styles = StyleSheet.create({
   empty: { ...typography.body, color: colors.navy, marginBottom: 20 },
   top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   date: { ...typography.caption, color: colors.bodyMuted },
-  text: { ...typography.body, color: colors.navy, marginTop: 12 },
+  body: { flexDirection: 'row', gap: 12, marginTop: 12 },
+  thumb: { width: 52, height: 52, borderRadius: 12 },
+  bodyText: { flex: 1 },
+  text: { ...typography.body, color: colors.navy },
   reason: { ...typography.caption, color: colors.bodyMuted, marginTop: 8, lineHeight: 18 },
 });

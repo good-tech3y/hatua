@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CaretLeftIcon, PaperPlaneRightIcon } from 'phosphor-react-native';
+import { CameraIcon, CaretLeftIcon, ImageIcon, PaperPlaneRightIcon, XIcon } from 'phosphor-react-native';
 import { Backdrop, GlassCard, PillButton, RoundButton } from '../components/ui';
 import { judge } from '../lib/ai';
 import { currentQuestIndex, dayKey, settle } from '../lib/game';
+import { pickProofPhoto } from '../lib/photo';
 import { useStore } from '../lib/store';
 import { colors, typography } from '../theme';
 
@@ -17,12 +18,18 @@ export default function CheckIn() {
   const checkIns = useStore((s) => s.checkIns);
   const addCheckIn = useStore((s) => s.addCheckIn);
   const [text, setText] = useState('');
+  const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
   if (!goal) return <Redirect href="/welcome" />;
 
   const ready = text.trim().length >= 3 && !busy;
+
+  async function addPhoto(fromCamera: boolean) {
+    const uri = await pickProofPhoto(fromCamera);
+    if (uri) setPhotoUri(uri);
+  }
 
   async function send() {
     if (!goal || !ready) return;
@@ -39,7 +46,15 @@ export default function CheckIn() {
       });
       const settled = settle(checkIns, raw);
       const id = String(Date.now());
-      addCheckIn({ id, at: Date.now(), day: dayKey(), text: clean, score: raw.score, ...settled });
+      addCheckIn({
+        id,
+        at: Date.now(),
+        day: dayKey(),
+        text: clean,
+        score: raw.score,
+        ...settled,
+        ...(photoUri ? { photoUri } : {}),
+      });
       router.replace({ pathname: '/verdict', params: { id } });
     } catch {
       setError('I could not reach the judge just now. Your words are still here. Try again.');
@@ -79,6 +94,30 @@ export default function CheckIn() {
             />
           </GlassCard>
         </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(250).duration(600)}>
+          {photoUri ? (
+            <View style={styles.photoWrap}>
+              <Image source={{ uri: photoUri }} style={styles.photo} />
+              <Pressable style={styles.photoRemove} onPress={() => setPhotoUri(null)}>
+                <XIcon size={14} color={colors.white} weight="bold" />
+              </Pressable>
+            </View>
+          ) : (
+            <View style={styles.photoRow}>
+              <Pressable style={styles.photoBtn} onPress={() => addPhoto(true)} disabled={busy}>
+                <CameraIcon size={18} color={colors.navy} weight="bold" />
+                <Text style={styles.photoBtnText}>Camera</Text>
+              </Pressable>
+              <Pressable style={styles.photoBtn} onPress={() => addPhoto(false)} disabled={busy}>
+                <ImageIcon size={18} color={colors.navy} weight="bold" />
+                <Text style={styles.photoBtnText}>Gallery</Text>
+              </Pressable>
+            </View>
+          )}
+          <Text style={styles.photoNote}>Optional proof, for goals words alone can't show. Stays on your phone.</Text>
+        </Animated.View>
+
         {error ? <Text style={styles.note}>{error}</Text> : null}
         <View style={{ opacity: ready ? 1 : 0.45 }}>
           <PillButton
@@ -113,5 +152,18 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
     padding: 0,
   },
+  photoRow: { flexDirection: 'row', gap: 10 },
+  photoBtn: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    paddingVertical: 12, borderRadius: 16, backgroundColor: 'rgba(252,254,255,0.7)',
+  },
+  photoBtnText: { ...typography.label, color: colors.navy },
+  photoWrap: { alignSelf: 'flex-start' },
+  photo: { width: 96, height: 96, borderRadius: 16 },
+  photoRemove: {
+    position: 'absolute', top: -6, right: -6, width: 22, height: 22, borderRadius: 11,
+    backgroundColor: colors.navy, alignItems: 'center', justifyContent: 'center',
+  },
+  photoNote: { ...typography.caption, color: colors.bodyMuted, marginTop: 8, marginBottom: 4 },
   note: { ...typography.caption, color: colors.bodyMuted, marginTop: 12 },
 });
