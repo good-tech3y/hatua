@@ -1,12 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import Animated, { FadeIn, ZoomIn, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { ArrowRightIcon, FlagIcon, MapTrifoldIcon, TrophyIcon } from 'phosphor-react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
+import Animated, { FadeIn, ZoomIn, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { HatuaMark } from '../components/art';
 import { Backdrop } from '../components/ui';
-import { playPop, playWhoosh } from '../lib/sound';
 import { colors, typography } from '../theme';
 
 const TOTAL_MS = 7000;
@@ -23,11 +22,10 @@ export default function Intro() {
   }
 
   useEffect(() => {
-    playWhoosh();
     scale.set(withSpring(1, { damping: 9, stiffness: 90 }));
-    timers.current.push(setTimeout(() => { setBeat(1); playPop(); }, 1400));
-    timers.current.push(setTimeout(() => { setBeat(2); playWhoosh(); }, 3200));
-    timers.current.push(setTimeout(() => { setBeat(3); playPop(); }, 5400));
+    timers.current.push(setTimeout(() => setBeat(1), 1400));
+    timers.current.push(setTimeout(() => setBeat(2), 3200));
+    timers.current.push(setTimeout(() => setBeat(3), 5400));
     timers.current.push(setTimeout(go, TOTAL_MS));
     return () => timers.current.forEach(clearTimeout);
   }, []);
