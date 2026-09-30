@@ -1,8 +1,8 @@
 export type Verdict = 'progress' | 'steady' | 'none';
 export type Quest = { id: string; title: string; need: number; done: number };
-export type Goal = { text: string; quests: Quest[]; createdAt: number };
-export type JudgeResult = { verdict: Verdict; score: number; reason: string };
-export type CheckIn = { id: string; at: number; day: string; text: string; verdict: Verdict; score: number; reason: string; xp: number; photoUri?: string };
+export type Goal = { text: string; quests: Quest[]; createdAt: number; completedAt?: number; photoRequired: boolean };
+export type JudgeResult = { verdict: Verdict; score: number; reason: string; stepsEarned?: number };
+export type CheckIn = { id: string; at: number; day: string; text: string; verdict: Verdict; score: number; reason: string; xp: number; photoUri?: string; steps?: number; completedQuestTitles?: string[] };
 
 export const QUEST_DAYS = 2;
 
@@ -35,21 +35,27 @@ export function successRate(history: CheckIn[]) {
 export const healthDelta = (v: Verdict) => (v === 'progress' ? 8 : v === 'steady' ? 2 : -6);
 
 // Turns the judge's raw answer into what the game actually applies.
-export function settle(history: CheckIn[], raw: JudgeResult) {
+export function settle(history: CheckIn[], raw: JudgeResult, hasPhoto: boolean, stepsRemaining = 1) {
   const movedToday = history.some((c) => c.day === dayKey() && c.verdict === 'progress');
   if (raw.verdict === 'progress' && movedToday) {
     return {
       verdict: 'steady' as Verdict,
       xp: 5,
+      steps: 0,
       reason:
         'That is real, but you already moved forward today. One step of progress a day keeps this honest. See you tomorrow.',
     };
   }
-  if (raw.verdict === 'progress') {
-    return { verdict: 'progress' as Verdict, xp: Math.round(20 + raw.score * 0.4), reason: raw.reason };
+  const cap = hasPhoto ? Math.max(1, stepsRemaining) : 1;
+  const steps = raw.verdict === 'progress' ? Math.max(0, Math.min(raw.stepsEarned ?? 1, cap)) : 0;
+  if (raw.verdict === 'progress' && steps === 0) {
+    return { verdict: 'steady' as Verdict, xp: 8, steps: 0, reason: raw.reason };
   }
-  if (raw.verdict === 'steady') return { verdict: 'steady' as Verdict, xp: 8, reason: raw.reason };
-  return { verdict: 'none' as Verdict, xp: 0, reason: raw.reason };
+  if (raw.verdict === 'progress') {
+    return { verdict: 'progress' as Verdict, xp: Math.round(20 + raw.score * 0.4) + (steps - 1) * 15, steps, reason: raw.reason };
+  }
+  if (raw.verdict === 'steady') return { verdict: 'steady' as Verdict, xp: 8, steps: 0, reason: raw.reason };
+  return { verdict: 'none' as Verdict, xp: 0, steps: 0, reason: raw.reason };
 }
 
 // How many days in a row you moved forward. Today does not break the streak until it ends.

@@ -26,7 +26,7 @@ export default async function handler(req: any, res: any) {
           {
             role: 'system',
             content:
-              'You turn a personal goal into 5 to 7 short quest milestones for a game. Each quest is a concrete checkpoint the player reaches through their own real-world effort, ordered from earliest to hardest. Never explain how to do the goal, never give instructions, tips, or teaching content, only name the milestone in a few plain words, like a level title. Respond only with JSON: {"quests": ["...", ...]}',
+              'You turn a personal goal into 5 to 7 short quest milestones for a game, and judge whether the goal is realistic for an ordinary person within its stated timeframe. Each quest is a concrete checkpoint reached through the player\'s own real-world effort, ordered earliest to hardest. Never give instructions or advice. Set photoRequired true only for goals best proven visually; false for private or non-visible habits. Set realistic false only when the goal scale or timeframe is clearly extreme; provide a kind, brief note suggesting a sustainable adjustment. Respond only with JSON: {"quests": ["...", ...], "photoRequired": true|false, "realistic": true|false, "note": "..."}.',
           },
           { role: 'user', content: `Goal: ${goal.trim().slice(0, 200)}` },
         ],
@@ -45,7 +45,12 @@ export default async function handler(req: any, res: any) {
       ? parsed.quests.filter((q: any) => typeof q === 'string').slice(0, 7)
       : [];
     if (quests.length < 3) { res.status(502).json({ error: 'AI returned too few quests' }); return; }
-    res.status(200).json({ quests });
+    res.status(200).json({
+      quests,
+      photoRequired: !!parsed.photoRequired,
+      realistic: parsed.realistic !== false,
+      note: typeof parsed.note === 'string' ? parsed.note.slice(0, 220) : '',
+    });
   } catch (e: any) {
     res.status(500).json({ error: 'Unexpected server error', detail: String(e).slice(0, 300) });
   }

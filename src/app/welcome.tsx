@@ -1,20 +1,20 @@
-import { useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import Animated, {
-  Easing,
-  FadeIn,
-  FadeInDown,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
-import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowRightIcon } from 'phosphor-react-native';
+import { useEffect } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import Animated, {
+    Easing,
+    FadeIn,
+    FadeInDown,
+    useAnimatedStyle,
+    useSharedValue,
+    withRepeat,
+    withSequence,
+    withTiming,
+} from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
 import { HatuaMark, HeroFigure } from '../components/art';
 import { Backdrop, PillButton } from '../components/ui';
 import { colors, typography } from '../theme';
@@ -74,7 +74,7 @@ export default function Welcome() {
             tone="light"
             label="Begin"
             icon={<ArrowRightIcon size={18} color={colors.ink} weight="bold" />}
-            onPress={() => router.replace('/name')}
+            onPress={() => router.replace('/intro')}
           />
         </Animated.View>
         <Text style={styles.note}>Everything you save stays on your phone.</Text>

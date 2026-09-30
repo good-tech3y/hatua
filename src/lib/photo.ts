@@ -29,3 +29,7 @@ export async function pickProofPhoto(fromCamera: boolean): Promise<string | null
   if (result.canceled || !result.assets?.[0]?.uri) return null;
   return keep(result.assets[0].uri);
 }
+
+export async function readProofPhotoBase64(uri: string): Promise<string> {
+  return FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+}

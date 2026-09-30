@@ -1,5 +1,12 @@
 import type { JudgeResult } from './game';
 
+export type QuestPlan = {
+  quests: string[];
+  photoRequired: boolean;
+  realistic: boolean;
+  note: string;
+};
+
 // Set EXPO_PUBLIC_AI_URL in .env to use the real judge. Without it the app runs in demo mode.
 const BASE = process.env.EXPO_PUBLIC_AI_URL;
 export const isDemo = !BASE;
@@ -98,14 +105,19 @@ export function demoJudge(text: string, recent: string[]): JudgeResult {
   };
 }
 
-export async function makeQuests(goal: string): Promise<string[]> {
+export async function makeQuests(goal: string): Promise<QuestPlan> {
   if (isDemo) {
     await wait(900);
-    return DEMO_QUESTS;
+    return { quests: DEMO_QUESTS, photoRequired: false, realistic: true, note: '' };
   }
-  const data = await post<{ quests?: string[] }>('/quests', { goal });
+  const data = await post<Partial<QuestPlan>>('/quests', { goal });
   if (!Array.isArray(data.quests) || data.quests.length < 3) throw new Error('Bad quests');
-  return data.quests;
+  return {
+    quests: data.quests,
+    photoRequired: data.photoRequired === true,
+    realistic: data.realistic !== false,
+    note: typeof data.note === 'string' ? data.note : '',
+  };
 }
 
 export async function judge(input: {
@@ -113,6 +125,11 @@ export async function judge(input: {
   quest: string;
   text: string;
   recent: string[];
+  photoBase64?: string;
+  photoRequired?: boolean;
+  questIndex?: number;
+  questTotal?: number;
+  stepsRemaining?: number;
 }): Promise<JudgeResult> {
   if (isDemo) {
     await wait(1100);

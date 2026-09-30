@@ -1,10 +1,11 @@
+import { useRouter } from 'expo-router';
+import { ArrowRightIcon } from 'phosphor-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowRightIcon } from 'phosphor-react-native';
 import { Backdrop, GlassCard, PillButton } from '../components/ui';
+import type { QuestPlan } from '../lib/ai';
 import { isDemo, makeQuests } from '../lib/ai';
 import { useStore } from '../lib/store';
 import { colors, typography } from '../theme';
@@ -16,6 +17,7 @@ export default function Goal() {
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [pendingGoal, setPendingGoal] = useState<{ text: string; plan: QuestPlan } | null>(null);
   const ready = text.trim().length >= 4 && !busy;
 
   async function submit() {
@@ -24,13 +26,23 @@ export default function Goal() {
     setError('');
     try {
       const goal = text.trim();
-      const titles = await makeQuests(goal);
-      startGoal(goal, titles);
-      router.replace({ pathname: '/path', params: { intro: '1' } });
+      const plan = await makeQuests(goal);
+      if (!plan.realistic) {
+        setPendingGoal({ text: goal, plan });
+        setBusy(false);
+        return;
+      }
+      start(goal, plan);
     } catch {
       setError('I could not reach the AI just now. Check your connection and try again.');
       setBusy(false);
     }
+  }
+
+  function start(goal: string, plan: QuestPlan) {
+    startGoal(goal, plan.quests, plan.photoRequired);
+    setPendingGoal(null);
+    router.replace({ pathname: '/path', params: { intro: '1' } });
   }
 
   return (
@@ -63,6 +75,23 @@ export default function Goal() {
           </GlassCard>
         </Animated.View>
         {error ? <Text style={styles.note}>{error}</Text> : null}
+        {pendingGoal ? (
+          <GlassCard style={styles.warning}>
+            <Text style={styles.warningTitle}>This goal may be too ambitious</Text>
+            <Text style={styles.warningText}>{pendingGoal.plan.note || 'Try a smaller milestone or timeline. You can still choose to continue.'}</Text>
+            <View style={styles.warningActions}>
+              <PillButton
+                tone="light"
+                label="Revise my goal"
+                onPress={() => setPendingGoal(null)}
+              />
+              <PillButton
+                label="Continue anyway"
+                onPress={() => start(pendingGoal.text, pendingGoal.plan)}
+              />
+            </View>
+          </GlassCard>
+        ) : null}
         <View style={{ opacity: ready ? 1 : 0.45 }}>
           <PillButton
             label={busy ? 'Building your path' : 'Make my quests'}
@@ -99,4 +128,8 @@ const styles = StyleSheet.create({
     padding: 0,
   },
   note: { ...typography.caption, color: colors.bodyMuted, marginTop: 12 },
+  warning: { borderColor: colors.coral, borderWidth: 1 },
+  warningTitle: { ...typography.heading, color: colors.navy },
+  warningText: { ...typography.body, color: colors.bodyMuted, marginTop: 8 },
+  warningActions: { gap: 10, marginTop: 14 },
 });

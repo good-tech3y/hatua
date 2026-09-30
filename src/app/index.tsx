@@ -1,23 +1,23 @@
-import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
+import {
+    ArrowRightIcon, ChatCircleTextIcon, ClockCounterClockwiseIcon, DotsThreeIcon,
+    FlagIcon, HouseSimpleIcon, TrophyIcon,
+} from 'phosphor-react-native';
+import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  ArrowRightIcon, ChatCircleTextIcon, ClockCounterClockwiseIcon, DotsThreeIcon,
-  FlagIcon, HouseSimpleIcon, TrophyIcon,
-} from 'phosphor-react-native';
-import { HatuaMark, HeroFigure } from '../components/art';
 import type { Mood } from '../components/art';
+import { HatuaMark, HeroFigure } from '../components/art';
 import { RealmScene } from '../components/scene';
 import { StatBar } from '../components/stats';
 import { Backdrop, Chip, GlassCard, PillButton, RoundButton, Toolbar } from '../components/ui';
-import { achievements } from '../lib/achievements';
 import { useAccess } from '../lib/access';
+import { achievements } from '../lib/achievements';
 import {
-  currentQuestIndex, dayKey, journeyPercent, levelOf, longestStreak, realDays, streakDays, successRate, xpInLevel,
+    currentQuestIndex, dayKey, journeyPercent, levelOf, longestStreak, realDays, streakDays, successRate, xpInLevel,
 } from '../lib/game';
-import { useRealm } from '../lib/useRealm';
 import { useStore } from '../lib/store';
+import { useRealm } from '../lib/useRealm';
 import { colors, typography } from '../theme';
 
 export default function Today() {
@@ -35,18 +35,18 @@ export default function Today() {
   const finished = !quest;
   const level = levelOf(xp);
   const streak = streakDays(checkIns);
-  const movedToday = checkIns.some((c) => c.day === dayKey() && c.verdict === 'progress');
+  const checkedInToday = checkIns.some((c) => c.day === dayKey());
   const mood: Mood = health >= 55 ? 'happy' : health >= 30 ? 'calm' : 'low';
-  const headline = finished ? 'You reached the end.' : movedToday ? 'That’s today done.' : 'One small step today.';
+  const headline = finished ? 'You reached the end.' : checkedInToday ? 'That’s today done.' : 'One small step today.';
   const body = finished
     ? 'Start a new goal from your profile when you are ready.'
-    : movedToday
-      ? 'You already moved forward today. Come back tomorrow for the next step.'
+    : checkedInToday
+      ? 'You already checked in today. Come back tomorrow for your next check-in.'
       : `${quest.done} of ${quest.need} real days so far. Only honest check-ins count.`;
   const greeting = finished
     ? 'Every quest on this path is complete.'
-    : movedToday
-      ? 'You have no quests waiting. Nicely done today.'
+    : checkedInToday
+      ? 'Your check-in is saved. We’ll see you tomorrow.'
       : 'You have 1 quest waiting today.';
 
   const won = achievements({ checkIns, xp, goal });
@@ -126,13 +126,15 @@ export default function Today() {
             <Text style={styles.kicker}>{finished ? 'All done' : 'Today’s quest'}</Text>
             <Text style={styles.questTitle}>{quest ? quest.title : 'You finished this path.'}</Text>
             <Text style={styles.body}>{body}</Text>
-            {quest ? (
+            {quest && !checkedInToday ? (
               <PillButton
-                label={movedToday ? 'Check in again' : 'Check in'}
+                label="Check in"
                 icon={<ArrowRightIcon size={18} color={colors.white} weight="bold" />}
                 onPress={() => router.push('/checkin')}
               />
             ) : null}
+            {quest && checkedInToday ? <Text style={styles.body}>Check-in is closed until tomorrow.</Text> : null}
+            {finished ? <PillButton label="Download certificate" onPress={() => router.push('/certificate')} /> : null}
           </GlassCard>
         </Animated.View>
       </ScrollView>

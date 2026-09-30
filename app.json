@@ -43,7 +43,9 @@
         {
           "cameraPermission": "Hatua uses the camera so you can add proof of your progress."
         }
-      ]
+      ],
+      "expo-audio",
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true,

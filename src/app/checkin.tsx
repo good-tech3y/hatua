@@ -1,13 +1,13 @@
+import { Redirect, useRouter } from 'expo-router';
+import { CameraIcon, CaretLeftIcon, ImageIcon, PaperPlaneRightIcon, XIcon } from 'phosphor-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { Redirect, useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CameraIcon, CaretLeftIcon, ImageIcon, PaperPlaneRightIcon, XIcon } from 'phosphor-react-native';
 import { Backdrop, GlassCard, PillButton, RoundButton } from '../components/ui';
 import { judge } from '../lib/ai';
 import { currentQuestIndex, dayKey, settle } from '../lib/game';
-import { pickProofPhoto } from '../lib/photo';
+import { pickProofPhoto, readProofPhotoBase64 } from '../lib/photo';
 import { useStore } from '../lib/store';
 import { colors, typography } from '../theme';
 
@@ -22,9 +22,11 @@ export default function CheckIn() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
+  const today = dayKey();
+  const checkedInToday = checkIns.some((checkIn) => checkIn.day === today);
   if (!goal) return <Redirect href="/welcome" />;
-
-  const ready = text.trim().length >= 3 && !busy;
+  if (checkedInToday) return <Redirect href="/" />;
+  const ready = text.trim().length >= 3 && !busy && (!goal.photoRequired || !!photoUri);
 
   async function addPhoto(fromCamera: boolean) {
     const uri = await pickProofPhoto(fromCamera);
@@ -37,14 +39,21 @@ export default function CheckIn() {
     setError('');
     try {
       const clean = text.trim();
-      const quest = goal.quests[currentQuestIndex(goal.quests)];
+      const questIndex = currentQuestIndex(goal.quests);
+      const quest = goal.quests[questIndex];
+      const stepsRemaining = goal.quests.reduce((sum, item) => sum + item.need - item.done, 0);
       const raw = await judge({
         goal: goal.text,
         quest: quest ? quest.title : 'The finish line',
         text: clean,
         recent: checkIns.slice(0, 3).map((c) => c.text),
+        ...(photoUri ? { photoBase64: await readProofPhotoBase64(photoUri) } : {}),
+        photoRequired: goal.photoRequired,
+        questIndex,
+        questTotal: goal.quests.length,
+        stepsRemaining,
       });
-      const settled = settle(checkIns, raw);
+      const settled = settle(checkIns, raw, Boolean(photoUri), stepsRemaining);
       const id = String(Date.now());
       addCheckIn({
         id,
@@ -115,7 +124,11 @@ export default function CheckIn() {
               </Pressable>
             </View>
           )}
-          <Text style={styles.photoNote}>Optional proof, for goals words alone can't show. Stays on your phone.</Text>
+          <Text style={styles.photoNote}>
+            {goal.photoRequired
+              ? 'Photo proof is required for this goal and is sent with your check-in for review.'
+              : 'Optional proof can support visible progress. Photos are sent with your check-in for review.'}
+          </Text>
         </Animated.View>
 
         {error ? <Text style={styles.note}>{error}</Text> : null}

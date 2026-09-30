@@ -6,7 +6,7 @@ export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') { res.status(405).json({ error: 'Use POST' }); return; }
 
   try {
-    const { goal, quest, text, recent } = req.body || {};
+    const { goal, quest, text, recent, photoBase64, photoRequired, stepsRemaining } = req.body || {};
     if (!text || typeof text !== 'string' || text.trim().length < 2) {
       res.status(400).json({ error: 'text is required' });
       return;
@@ -18,24 +18,34 @@ export default async function handler(req: any, res: any) {
     const recentBlock = recentList.length
       ? `Their last few check-ins, most recent first:\n${recentList.map((r: string, i: number) => `${i + 1}. ${r}`).join('\n')}`
       : 'They have no earlier check-ins yet.';
+    if (photoRequired && !photoBase64) {
+      res.status(200).json({ verdict: 'none', score: 0, stepsEarned: 0, reason: 'This goal needs a photo to count. Attach one and try again.' });
+      return;
+    }
+    const maxSteps = photoBase64 ? Math.max(1, Number(stepsRemaining) || 1) : 1;
+    const userText = `Goal: ${String(goal ?? '').slice(0, 200)}\nCurrent quest: ${String(quest ?? '').slice(0, 120)}\n${recentBlock}\n\nToday's check-in: ${text.trim().slice(0, 500)}`;
+    const system = photoBase64
+      ? 'You are an honest goal-tracking judge. Inspect the actual image and text together; the image is evidence, not decoration. Check that it visibly supports the claimed activity and scale. A normal day earns 1 progress unit. Award multiple units only when the image clearly proves that larger jump. If required proof is unrelated or insufficient, return none and 0 steps. Never give advice. Respond only JSON: {"verdict":"progress"|"steady"|"none","score":0-100,"stepsEarned":integer 0 to the given maximum,"reason":"one short direct sentence"}.'
+      : 'You are an honest goal-tracking judge. Judge plausibility against ordinary human limits, the goal, current milestone, and timeframe. Text is not proof. Reject extraordinary daily claims without evidence; for example, running 100 km in one day must be none with 0 steps, even when stated specifically. Compare recent check-ins and do not reward repeats. Never give advice. Respond only JSON: {"verdict":"progress"|"steady"|"none","score":0-100,"stepsEarned":0 or 1,"reason":"one short direct sentence"}. Award 1 only for plausible progress.';
 
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'openai/gpt-oss-120b',
-        temperature: 0.3,
-        max_tokens: 250,
+        model: photoBase64 ? 'meta-llama/llama-4-scout-17b-16e-instruct' : 'openai/gpt-oss-120b',
+        temperature: 0.2,
+        max_tokens: 300,
         response_format: { type: 'json_object' },
         messages: [
-          {
-            role: 'system',
-            content:
-              'You are an honest game judge inside a goal-tracking app. A player sends a short daily check-in about what they actually did. Decide if it shows genuine, specific, real progress worth rewarding, or if it is vague, generic, exaggerated, copy-pasted, or clearly not real. Compare it against their recent check-ins; do not reward a repeat of the same vague claim. Never explain how to do their goal or give advice, only judge what they reported. Respond only with JSON: {"verdict": "progress" | "steady" | "none", "score": 0-100, "reason": "one short, warm, direct sentence to the player explaining the verdict"}. progress = specific and real. steady = plausible effort but not concrete enough to fully count. none = too vague, empty, or not believable.',
-          },
+          { role: 'system', content: `${system} Maximum steps for this check-in: ${maxSteps}.` },
           {
             role: 'user',
-            content: `Goal: ${String(goal ?? '').slice(0, 200)}\nCurrent quest: ${String(quest ?? '').slice(0, 120)}\n${recentBlock}\n\nToday's check-in: ${text.trim().slice(0, 500)}`,
+            content: photoBase64
+              ? [
+                  { type: 'text', text: userText },
+                  { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${photoBase64}` } },
+                ]
+              : userText,
           },
         ],
       }),
@@ -51,11 +61,12 @@ export default async function handler(req: any, res: any) {
     const parsed = JSON.parse(raw);
     const verdict = ['progress', 'steady', 'none'].includes(parsed.verdict) ? parsed.verdict : 'none';
     const score = Math.max(0, Math.min(100, Math.round(Number(parsed.score) || 0)));
+    const stepsEarned = verdict === 'progress' ? Math.max(0, Math.min(maxSteps, Math.round(Number(parsed.stepsEarned) || 0))) : 0;
     const reason =
       typeof parsed.reason === 'string' && parsed.reason.trim()
         ? parsed.reason.trim().slice(0, 220)
         : 'I could not read that clearly. Try describing it a little differently.';
-    res.status(200).json({ verdict, score, reason });
+    res.status(200).json({ verdict, score, stepsEarned, reason });
   } catch (e: any) {
     res.status(500).json({ error: 'Unexpected server error', detail: String(e).slice(0, 300) });
   }
