@@ -1,56 +1,73 @@
-# Welcome to your Expo app 👋
+<h1 align="center">Hatua</h1>
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+<p align="center">Type one goal. Hatua turns it into a game, and only real progress ever counts.</p>
 
-## Get started
+<p align="center">
+  <img src="https://img.shields.io/badge/Expo-000020?style=for-the-badge&amp;logo=expo&amp;logoColor=white" alt="Expo">
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&amp;logo=typescript&amp;logoColor=white" alt="TypeScript">
+  <img src="https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&amp;logo=react&amp;logoColor=61DAFB" alt="React Native">
+  <img src="https://img.shields.io/badge/RevenueCat-F25A5A?style=for-the-badge&amp;logo=revenuecat&amp;logoColor=white" alt="RevenueCat">
+  <img src="https://img.shields.io/badge/Groq-F55036?style=for-the-badge&amp;logo=groq&amp;logoColor=white" alt="Groq">
+</p>
 
-1. Install dependencies
+## A little about me
 
-   ```bash
-   npm install
-   ```
+I am Hatua, which means "a step" in Swahili. I turn one goal into a path of short quests and a small world to explore. I do not count words for their own sake. My hero grows only from check-ins the judge considers genuine progress.
 
-2. Start the app
+* One goal. One path. Real steps.
 
-   ```bash
-   npx expo start
-   ```
+## What I do
 
-In the output, you'll find options to open the app in a
+Start with one goal. Groq turns it into 5 to 7 short quest milestones, naming each one without teaching or explaining how to do it. Walk through a small low-poly world, check in each day with an honest account of what you did, and watch a lantern light when you complete a quest.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Why Hatua is different
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+The AI judge considers the specificity and consistency of each check-in. Vague, generic, or copy-pasted answers do not count as progress. It judges what you wrote and how it fits your check-in history. It cannot prove that a claim is literally true.
 
-## Get a fresh project
+## Features
 
-When you're ready, run:
+- Turn one personal goal into 5 to 7 short quest milestones.
+- Explore a small low-poly world where a lit lantern marks each completed quest.
+- Check in each day with a short, honest description of what you actually did.
+- Optionally attach a photo as proof.
+- Grow a custom low-poly hero with customizable colors. The hero and world are hand-built SVG art, not stock icon or illustration packs.
+- Explore four realms, unlocked with Pro or during the free trial.
+- Earn 10 achievements computed from real check-in history.
+- View your name, hero, and lifetime stats on your profile, including your streak, best streak, real days, and achievements.
 
-```bash
-npm run reset-project
+## Built with
+
+Hatua is an Android app built with Expo, Expo Router, React Native, and TypeScript. Zustand keeps app state persisted on-device with AsyncStorage. Custom animation and art use react-native-reanimated and react-native-svg. RevenueCat handles subscriptions. Groq powers the AI judge through a serverless function, so the Groq API key never ships in the app. Optional photo proof uses expo-image-picker and expo-file-system, with photos kept on-device except when a player chooses to send one for AI judgment.
+
+## How RevenueCat is used
+
+Every new player gets a 30-day free trial with everything unlocked. No purchase is needed to try Hatua. After the trial, players can choose a monthly or yearly subscription. There is no lifetime tier.
+
+Subscriptions can unlock realms and hero colors. Progress, XP, and levels can never be bought.
+
+## Privacy
+
+Player-created data stays on the player's phone. Check-in text is sent to the AI judge, and a photo is sent only if the player chooses to attach one. The information is sent only for judgment and is never stored server-side. Hatua has no accounts, ads, or analytics.
+
+## Run it locally
+
+Install dependencies, then start Expo:
+
+```sh
+npm install
+npm start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+To start the Android target directly, use `npm run android`.
 
-### Other setup steps
+The app runs in a fully offline demo mode with a built-in fallback judge when no live judge URL is configured. To use the live AI judge, set `EXPO_PUBLIC_AI_URL` for the app and set `GROQ_API_KEY` as an environment variable on the server that serves `/quests` and `/judge`.
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## License
 
-## Learn more
+Hatua is licensed under the MIT License. See [LICENSE](LICENSE).
 
-To learn more about developing your project with Expo, look at the following resources:
+Built for RevenueCat Shipaton 2026 in the Next Gen Award track.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Thanks for taking a step with me. See you out there,
 
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Hatua

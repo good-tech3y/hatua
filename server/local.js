@@ -2,7 +2,7 @@ const http = require('http');
 const PORT = process.env.PORT || 8788;
 const KEY = process.env.GROQ_API_KEY;
 const TEXT_MODEL = 'openai/gpt-oss-120b';
-const VISION_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
+const VISION_MODEL = 'qwen/qwen3.8-27b';
 
 function send(res, status, obj) {
   res.writeHead(status, {

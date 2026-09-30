@@ -32,7 +32,7 @@ export default async function handler(req: any, res: any) {
       method: 'POST',
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: photoBase64 ? 'meta-llama/llama-4-scout-17b-16e-instruct' : 'openai/gpt-oss-120b',
+        model: photoBase64 ? 'qwen/qwen3.8-27b' : 'openai/gpt-oss-120b',
         temperature: 0.2,
         max_tokens: 300,
         response_format: { type: 'json_object' },

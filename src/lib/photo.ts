@@ -1,5 +1,6 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import * as ImagePicker from 'expo-image-picker';
+import { Platform } from 'react-native';
 
 const DIR = `${FileSystem.documentDirectory}proof/`;
 
@@ -23,13 +24,18 @@ export async function pickProofPhoto(fromCamera: boolean): Promise<string | null
   if (!perm.granted) return null;
 
   const result = fromCamera
-    ? await ImagePicker.launchCameraAsync({ quality: 0.6, allowsEditing: true, aspect: [4, 3] })
-    : await ImagePicker.launchImageLibraryAsync({ quality: 0.6, allowsEditing: true, aspect: [4, 3] });
+    ? await ImagePicker.launchCameraAsync({ quality: 0.6, allowsEditing: true, aspect: [4, 3], base64: true })
+    : await ImagePicker.launchImageLibraryAsync({ quality: 0.6, allowsEditing: true, aspect: [4, 3], base64: true });
 
-  if (result.canceled || !result.assets?.[0]?.uri) return null;
-  return keep(result.assets[0].uri);
+  const asset = result.assets?.[0];
+  if (result.canceled || !asset?.uri) return null;
+  if (Platform.OS === 'web') {
+    return asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : null;
+  }
+  return keep(asset.uri);
 }
 
 export async function readProofPhotoBase64(uri: string): Promise<string> {
+  if (uri.startsWith('data:')) return uri.slice(uri.indexOf(',') + 1);
   return FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
 }
